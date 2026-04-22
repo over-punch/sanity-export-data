@@ -33,12 +33,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/quitequinn/sanity-export-data.git"
+    "url": "https://github.com/Liiift-Studio/sanity-export-data.git"
   },
   "bugs": {
-    "url": "https://github.com/quitequinn/sanity-export-data/issues"
+    "url": "https://github.com/Liiift-Studio/sanity-export-data/issues"
   },
-  "homepage": "https://github.com/quitequinn/sanity-export-data#readme",
+  "homepage": "https://github.com/Liiift-Studio/sanity-export-data#readme",
   "peerDependencies": {
     "@sanity/ui": "^1.0.0",
     "react": "^18.0.0",

@@ -1,0 +1,27 @@
+%% Data-flow of @liiift-studio/sanity-export-data (shipped src/ExportData.jsx)
+%% Render: npm run capture  (see scripts/capture.mjs)
+flowchart TD
+    A["Editor opens the tool<br/>in Sanity Studio"] --> B["Type a name + pick a<br/>document type<br/>(typeface, order, font, ...)"]
+    B --> C{"Exclude filter<br/>toggled on?"}
+    C -- "yes" --> D["GROQ:<br/>title match name*<br/>AND NOT title match *exclude*<br/>(drafts excluded)"]
+    C -- "no" --> E["GROQ:<br/>title match name*<br/>(drafts excluded)"]
+    D --> F["client.fetch(query)"]
+    E --> F
+    F --> G["Auto-discover first-level<br/>reference fields<br/>(_ref and _ref[] arrays)"]
+    G --> H{"Populate any<br/>references?"}
+    H -- "check boxes" --> I["Re-fetch with deref:<br/>field-&gt;{...}"]
+    H -- "none" --> J["Keep flat documents"]
+    I --> K{"Export format<br/>radio"}
+    J --> K
+    K -- "CSV" --> L["Flatten to rows<br/>(objects JSON-stringified,<br/>quotes escaped)"]
+    K -- "JSON" --> M["JSON.stringify(docs, null, 2)"]
+    L --> N["Build data: URI<br/>and click hidden a[download]"]
+    M --> N
+    N --> O["File saved:<br/>type-name-date.csv / .json"]
+
+    classDef studio fill:#2276fc,stroke:#1b5fd0,color:#fff;
+    classDef query fill:#0f1a2b,stroke:#2276fc,color:#dce6f7;
+    classDef out fill:#1c8b5a,stroke:#13734a,color:#fff;
+    class A,B studio;
+    class D,E,F,G,I query;
+    class O out;

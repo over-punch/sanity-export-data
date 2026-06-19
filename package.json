@@ -13,6 +13,7 @@
 	],
 	"scripts": {
 		"build": "esbuild src/index.jsx --bundle=true --format=esm --jsx=automatic --external:react --external:react-dom --external:sanity --external:@sanity/* --outfile=dist/index.js",
+		"capture": "node scripts/capture.mjs",
 		"prepublishOnly": "npm run build"
 	},
 	"keywords": [

@@ -1,6 +1,6 @@
 {
 	"name": "@liiift-studio/sanity-export-data",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"description": "Flexible data export utility for Sanity Studio — export any document types to CSV or JSON with optional reference population",
 	"main": "dist/index.js",
 	"module": "dist/index.js",

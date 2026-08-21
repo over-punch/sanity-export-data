@@ -1,6 +1,6 @@
 // Component for exporting Sanity documents to CSV or JSON format
-import { Stack, Card, Grid, Heading, Text, Button, TextInput, Select, Box, Checkbox, Radio, Label } from '@sanity/ui'
-import { DownloadIcon, CollapseIcon, ExpandIcon } from '@sanity/icons'
+import { Stack, Card, Grid, Heading, Text, Button, TextInput, Select, Box, Checkbox, Radio, Label } from '@liiift-studio/sanity-ui-compat'
+import { DownloadIcon, CollapseIcon, ExpandIcon } from '@liiift-studio/sanity-ui-compat/icons'
 import { useState, useEffect } from 'react'
 
 /**

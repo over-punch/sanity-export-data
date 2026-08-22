@@ -1,27 +1,30 @@
-%% Data-flow of @liiift-studio/sanity-export-data (shipped src/ExportData.jsx)
+%% Data-flow of @liiift-studio/sanity-export-data (shipped src/ExportData.tsx)
 %% Render: npm run capture  (see scripts/capture.mjs)
 flowchart TD
-    A["Editor opens the tool<br/>in Sanity Studio"] --> B["Type a name + pick a<br/>document type<br/>(typeface, order, font, ...)"]
-    B --> C{"Exclude filter<br/>toggled on?"}
-    C -- "yes" --> D["GROQ:<br/>title match name*<br/>AND NOT title match *exclude*<br/>(drafts excluded)"]
-    C -- "no" --> E["GROQ:<br/>title match name*<br/>(drafts excluded)"]
-    D --> F["client.fetch(query)"]
-    E --> F
-    F --> G["Auto-discover first-level<br/>reference fields<br/>(_ref and _ref[] arrays)"]
-    G --> H{"Populate any<br/>references?"}
-    H -- "check boxes" --> I["Re-fetch with deref:<br/>field-&gt;{...}"]
-    H -- "none" --> J["Keep flat documents"]
-    I --> K{"Export format<br/>radio"}
-    J --> K
-    K -- "CSV" --> L["Flatten to rows<br/>(objects JSON-stringified,<br/>quotes escaped)"]
-    K -- "JSON" --> M["JSON.stringify(docs, null, 2)"]
-    L --> N["Build data: URI<br/>and click hidden a[download]"]
-    M --> N
-    N --> O["File saved:<br/>type-name-date.csv / .json"]
+    A["Editor opens the tool<br/>in Sanity Studio"] --> B{"documentTypes prop<br/>provided?"}
+    B -- "yes" --> C["Use the given types"]
+    B -- "no (default)" --> D["Discover types:<br/>array::unique(*[]._type)"]
+    C --> E["Pick one or more types<br/>+ optional date / field filters"]
+    D --> E
+    E --> F{"Custom GROQ<br/>toggled on?"}
+    F -- "yes" --> G["Use the typed query verbatim"]
+    F -- "no" --> H["Build GROQ:<br/>_type in [...]<br/>+ dateTime(_createdAt) &gt;= ...<br/>+ defined(field) || ...<br/>[0...maxDocuments]"]
+    G --> I["client.fetch(query)"]
+    H --> I
+    I --> J{"Include references?"}
+    J -- "yes" --> K["Append reverse lookup:<br/>references: *[references(^._id)]"]
+    J -- "no" --> L["Keep documents as fetched"]
+    K --> M{"Export format"}
+    L --> M
+    M -- "CSV" --> N["Rows from scalar top-level keys<br/>(object-valued keys omitted<br/>from the header)"]
+    M -- "JSON" --> O["JSON.stringify(docs, null, 2)"]
+    N --> P["Blob + URL.createObjectURL<br/>then click a[download]"]
+    O --> P
+    P --> Q["File saved:<br/>sanity-export-&lt;types&gt;-&lt;date&gt;.csv / .json<br/>(or your custom filename)"]
 
     classDef studio fill:#2276fc,stroke:#1b5fd0,color:#fff;
     classDef query fill:#0f1a2b,stroke:#2276fc,color:#dce6f7;
     classDef out fill:#1c8b5a,stroke:#13734a,color:#fff;
-    class A,B studio;
-    class D,E,F,G,I query;
-    class O out;
+    class A,B,E studio;
+    class D,G,H,I,K query;
+    class Q out;

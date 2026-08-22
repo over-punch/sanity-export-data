@@ -1,41 +1,45 @@
 # @liiift-studio/sanity-export-data
 
-> Search your Sanity content by name and type, optionally populate references, and download it as CSV or JSON — straight from a Sanity Studio panel.
+> Pick document types, filter them, optionally pull in referencing documents, and download the result as CSV or JSON — straight from a Sanity Studio panel.
 
 [![npm](https://img.shields.io/npm/v/@liiift-studio/sanity-export-data.svg)](https://www.npmjs.com/package/@liiift-studio/sanity-export-data)
 [![license](https://img.shields.io/npm/l/@liiift-studio/sanity-export-data.svg)](https://www.npmjs.com/package/@liiift-studio/sanity-export-data)
-[![Sanity](https://img.shields.io/badge/Sanity-v3%20%7C%20v4%20%7C%20v5-blue.svg)](https://www.sanity.io)
+[![Sanity Studio v3–v6](https://img.shields.io/badge/Sanity%20Studio-v3%20%E2%80%93%20v6-blue.svg)](https://www.sanity.io)
 
-`ExportData` is a single React component for Sanity Studio. An editor types a name,
-picks a document type, ticks which referenced documents to expand, chooses CSV or
-JSON, and the matching documents download to their machine. No GROQ, no scripting,
-no API tokens to hand around — it runs inside Studio with the signed-in user's
-session.
+`ExportData` is a single React component for Sanity Studio. An editor selects one or
+more document types (discovered from the dataset, or constrained by you), optionally
+narrows by creation date, field presence, or a hand-written GROQ query, chooses CSV or
+JSON, and the matching documents download to their machine. No scripting, no API tokens
+to hand around — it runs inside Studio with the signed-in user's session.
 
-> **Heads up — this is a focused, foundry-oriented tool.** The document-type
-> dropdown is a fixed list (`typeface`, `collection`, `pair`, `font`, `license`,
-> `order`, `account`, `cart`, `page`, `blogpost`) and the result links assume a
-> typeface-foundry desk structure. It is published for reuse across Liiift Studio
-> foundry projects; adapt the type list (see [Adapting it](#adapting-it)) if your
-> schema differs.
+> ⚠️ **Read this if you are upgrading or were following an earlier version of this
+> README.** Earlier revisions of these docs described a different implementation — a
+> foundry-specific panel with a fixed type dropdown and `client` / `displayName` / `icon`
+> props. **That component is not what npm ships.** The published bundle is built from
+> `src/ExportData.tsx` and has the props documented below. See
+> [Two implementations under `src/`](#maintainer-note--two-implementations-under-src)
+> for why the mix-up is easy to make, and
+> [The foundry-specific variant](#the-foundry-specific-variant-srcexportdatajsx) for the
+> older component, which still lives in the repo.
 
 ## How it works
 
-<img src="https://raw.githubusercontent.com/Liiift-Studio/sanity-export-data/main/assets/export-flow.svg?v=1" alt="Data-flow diagram: an editor types a name and picks a document type, ExportData runs a title-match GROQ query (with an optional exclude filter and drafts excluded), auto-discovers first-level reference fields, optionally re-fetches with dereferenced references, then serialises the documents to CSV or JSON and downloads them as type-name-date.csv or .json" width="420" />
+<img src="https://raw.githubusercontent.com/Liiift-Studio/sanity-export-data/main/assets/export-flow.svg?v=2" alt="Data-flow diagram: ExportData either uses the documentTypes prop or discovers types with array::unique on _type; the editor picks types plus optional date and field filters, or supplies a custom GROQ query; the query is fetched with a maxDocuments slice, optionally appending a reverse references lookup; results are serialised to CSV or JSON and saved via a Blob object URL as sanity-export-types-date.csv or .json" width="420" />
 
-1. **Search.** As you type a name and pick a type, the component runs a
-   `title match "name*"` GROQ query (drafts excluded), with an optional
-   *Excluding* filter.
-2. **Discover references.** It scans the first level of each result for reference
-   fields (`_ref`) and arrays of references (`_ref[]`), and offers a checkbox per
-   field.
-3. **Populate (optional).** Tick references to re-fetch them dereferenced
-   (`field->{...}`) so the export contains the full referenced documents, not just
-   `_ref` pointers.
-4. **Export.** Choose CSV or JSON, then download. The filename is
-   `type-name-date.ext` (the `-name` segment is dropped when the search box is
-   empty, and `date` is the browser's `en-US` locale date, e.g.
-   `typeface-Freight-6/19/2026.csv`).
+1. **Discover types.** On mount the component lists the types you can export. If you
+   passed `documentTypes`, that list is used verbatim; otherwise it queries the dataset
+   with `array::unique(*[]._type)`.
+2. **Filter.** Select one or more types, then optionally narrow by creation date
+   (`dateTime(_createdAt) >= …`) and by field presence (a comma-separated list becomes
+   `defined(a) || defined(b)`). Advanced users can flip on **custom GROQ** and supply a
+   query directly, which bypasses all of the above.
+3. **Include references (optional).** Ticking this appends a **reverse** lookup —
+   `"references": *[references(^._id)]{ _id, _type, title, name, slug }` — so each
+   exported document carries a summary of the documents that **point at it**.
+4. **Export.** Choose CSV or JSON, then download. The file is built as a `Blob` and
+   saved through an object URL. The default filename is
+   `sanity-export-<joined-types>-<YYYY-MM-DD>.<ext>` (e.g.
+   `sanity-export-post-page-2026-08-21.json`); you can override it in the panel.
 
 ## Install
 
@@ -43,37 +47,41 @@ session.
 npm install @liiift-studio/sanity-export-data
 ```
 
-The package ships an ESM bundle and declares these peer dependencies — install/keep
-them in your Studio:
-
-| Peer dependency | Supported range |
-|---|---|
-| `sanity` | `^3.0.0 \|\| ^4.0.0 \|\| ^5.0.0` |
-| `react` | `^18.0.0 \|\| ^19.0.0` |
-| `@sanity/ui` | `^1.0.0 \|\| ^2.0.0 \|\| ^3.0.0` |
-| `@sanity/icons` | `^2.0.0 \|\| ^3.0.0` |
+The package ships an ESM bundle and declares peer dependencies on `sanity`,
+`@sanity/ui`, `@sanity/icons`, and `react` — all of which a Studio already has. **One
+build covers Sanity Studio v3 through v6**; see [Compatibility](#compatibility) for the
+exact ranges and why `@sanity/ui` is capped below v5.
 
 ## Quick start
 
-`ExportData` is the **default export**. Give it a Sanity client and a `displayName`
-(and optionally an `icon`):
+`ExportData` is available as both the **default** and a **named** export. The only
+required prop is a Sanity client:
 
 ```jsx
 import ExportData from '@liiift-studio/sanity-export-data'
+// or: import { ExportData } from '@liiift-studio/sanity-export-data'
 import { useClient } from 'sanity'
-import { DownloadIcon } from '@sanity/icons'
 
 function DataExporter() {
 	const client = useClient({ apiVersion: '2023-01-01' })
 
-	return (
-		<ExportData
-			client={client}
-			displayName="Export Data"
-			icon={DownloadIcon}
-		/>
-	)
+	return <ExportData client={client} />
 }
+```
+
+Constrain the type list and default the panel to CSV:
+
+```jsx
+<ExportData
+	client={client}
+	documentTypes={['post', 'page', 'author']}
+	format="csv"
+	maxDocuments={500}
+	onComplete={({ exported, filename }) => {
+		console.log(`Exported ${exported} documents to ${filename}`)
+	}}
+	onError={(message) => console.error('Export failed:', message)}
+/>
 ```
 
 ### As a Studio tool
@@ -90,7 +98,7 @@ import ExportData from '@liiift-studio/sanity-export-data'
 
 function ExportDataTool() {
 	const client = useClient({ apiVersion: '2023-01-01' })
-	return <ExportData client={client} displayName="Export Data" icon={DownloadIcon} />
+	return <ExportData client={client} />
 }
 
 export default defineConfig({
@@ -107,23 +115,30 @@ export default defineConfig({
 })
 ```
 
-> The component renders its own UI (search box, type dropdown, reference checkboxes,
-> format radios, results list). It does not register itself as a tool — you mount it
-> wherever a `client` is available.
+> The component renders its own UI (type checkboxes, date and field filters, a custom
+> GROQ box, format radios, a filename field, and a progress bar). It does not register
+> itself as a tool — you mount it wherever a `client` is available.
 
 ## Props
 
-The shipped component accepts exactly three props:
-
-| Prop | Type | Required | Description |
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `client` | `SanityClient` | **yes** | Sanity client used for all `fetch` calls. |
-| `displayName` | `string` | no | Heading shown above the panel. |
-| `icon` | `React.ComponentType` | no | Icon rendered beside the heading (e.g. a `@sanity/icons` icon). |
+| `client` | `SanityClient` | **required** | Sanity client used for every `fetch`. Determines the dataset and the permissions the export runs under. |
+| `documentTypes` | `string[]` | `[]` | Types offered in the panel. Empty means "discover every `_type` in the dataset". |
+| `format` | `'json' \| 'csv'` | `'json'` | Format the panel starts on. The editor can still switch it. |
+| `includeReferences` | `boolean` | `false` | Initial state of the "include references" toggle (see [Referencing documents](#referencing-documents)). |
+| `maxDepth` | `number` | `2` | Reference-expansion depth the panel starts on. |
+| `maxDocuments` | `number` | `1000` | Slice applied to the generated query (`[0...maxDocuments]`). |
+| `onComplete` | `(results: { exported: number; format: string; filename: string }) => void` | `undefined` | Called after a successful download. |
+| `onError` | `(error: string) => void` | `undefined` | Called when type discovery or the export fails. |
 
-There are no `format`, `documentTypes`, `includeReferences`, `maxDepth`,
-`onComplete`, or `onError` props — the format, types, references, and filters are
-all chosen interactively in the panel.
+> `format`, `includeReferences`, and `maxDepth` seed the panel's initial UI state — they
+> are **starting values, not locks**. The editor can change all three in the panel.
+> `documentTypes` and `maxDocuments` genuinely constrain what a run can touch.
+
+> **`displayName` and `icon` are not props of the published component.** They belong to
+> the unshipped `.jsx` variant; passing them is silently ignored. Render your own
+> heading around the component if you want one.
 
 ## What gets exported
 
@@ -144,84 +159,189 @@ The raw documents as fetched, pretty-printed:
 
 ### CSV
 
-One row per document. The header is the union of all top-level keys across the
-result set; string and object/array values are wrapped in quotes (objects are
-JSON-stringified, embedded `"` doubled), while numbers and booleans are written
-raw:
+One row per document, but note the **object-flattening rule**: a key is only included
+in the header if its value is a **non-object** (scalar) in at least one document.
+Object- and array-valued keys — `slug`, portable-text bodies, reference fields, the
+`references` block — are **dropped from the header entirely**, so they do not appear in
+the CSV at all.
 
 ```csv
-_id,_type,title,slug
-"typeface-123","typeface","Freight","{""current"":""freight""}"
+_id,_type,title
+typeface-123,typeface,Freight
 ```
 
-### Populated references
+Within a row, a value is quoted **only when the string contains a comma** (embedded `"`
+is then doubled); everything else is written raw.
 
-When you tick a reference field, that field is re-fetched dereferenced, so the
-export carries the full referenced document inline instead of a `{ _ref }` pointer:
+> **CSV is lossy here.** If you need nested data — slugs, references, arrays, portable
+> text — **export JSON**. Reaching for CSV and finding your `slug` column missing is the
+> single most common surprise with this tool.
+
+### Referencing documents
+
+Ticking **include references** does **not** dereference the document's own reference
+fields. It appends a **reverse** lookup — every document that points **at** the exported
+one — under a `references` key:
 
 ```json
 {
 	"_id": "typeface-123",
 	"_type": "typeface",
 	"title": "Freight",
-	"foundry": {
-		"_id": "foundry-9",
-		"title": "Darden Studio"
-	}
+	"references": [
+		{ "_id": "order-88", "_type": "order", "title": "Order #88" },
+		{ "_id": "pair-4", "_type": "pair", "name": "Freight + Grot" }
+	]
 }
 ```
 
-Only **first-level** reference fields discovered in the search results are offered;
-reference expansion is one level deep.
+Each entry is a **summary** — `_id`, `_type`, `title`, `name`, `slug` only — not the
+full document.
+
+> **`maxDepth` above 1 does not nest.** The depth parameter concatenates the *same*
+> `references` projection repeatedly into one projection rather than nesting it, so
+> values above `1` add duplicate keys instead of a second level. Leave it at `1` unless
+> you are prepared to read the generated query.
 
 ## Filtering
 
-All filtering happens in the panel — there are no filter props:
+Filters are set in the panel; the props only seed their initial values:
 
-- **Name** — the title prefix to match (`title match "name*"`).
-- **Type** — one document type from the dropdown.
-- **Excluding** (toggle) — adds `&& !(title match "*exclude*")` to drop unwanted
-  matches.
-- **Drafts** are always excluded (`!(_id in path('drafts.**'))`).
+- **Types** — one or more, from the discovered or supplied list → `_type in ["a", "b"]`.
+- **Created since** — a date → `dateTime(_createdAt) >= dateTime("…")`.
+- **Fields present** — a comma-separated list → `(defined(a) || defined(b))`.
+- **Custom GROQ** (toggle) — replaces the whole generated query with what you type.
+- **Cap** — every generated query ends in `[0...maxDocuments]`.
+
+> **Drafts are _not_ excluded.** The generated query has no `!(_id in path('drafts.**'))`
+> guard, so draft documents matching your filters are exported alongside published ones.
+> Add the guard yourself via the custom-GROQ box if you need published-only output.
 
 ## Use cases
 
-- **Backups & archives** — pull a typeface, collection, or order set to JSON.
-- **Migration** — export documents with references populated for re-import elsewhere.
-- **Reporting** — export orders/accounts to CSV for Excel or Google Sheets.
-- **Content audits** — list and export a type filtered by name.
+- **Backups & archives** — pull a whole document type to JSON.
+- **Reporting** — export orders or accounts to CSV for Excel or Google Sheets (scalar
+  fields only — see the CSV caveat above).
+- **Content audits** — list documents created since a date, or missing a required field.
+- **Impact analysis** — use the reverse `references` lookup to see what points at a
+  document before you change or retire it.
 
 ## Caveats & limits
 
-- **Download size.** Files are delivered via a `data:` URI and a synthetic
-  `<a download>` click. Browsers cap data-URI length (often a few MB), so very large
-  result sets can fail or truncate — narrow the search or export in batches.
-- **Title-based search only.** A document must match `title match "name*"` to appear;
-  there is no full-dataset "export everything" button.
-- **GROQ is built from input.** The query interpolates the typed name, exclude value,
-  and selected type directly into GROQ. It runs read-only `fetch`es under the
-  signed-in user's permissions, but treat it as an internal admin tool rather than
-  untrusted input.
-- **Foundry-specific defaults.** The type list and result-link desk paths assume a
-  typeface-foundry schema — see below to adapt.
-
-## Adapting it
-
-The document-type list and the desk-link paths are defined inline in
-`src/ExportData.jsx`:
-
-- The `<Select>` `<option>` values are the available types.
-- The results list builds `href`s like `/desk/<type>;<id>` (with an `orderable-`
-  prefix for `typeface`; the code also handles `licenseGroup`, which is not in the
-  default dropdown).
-
-Fork or vendor the file and edit those to match your schema and desk structure.
+- **CSV silently drops nested fields.** Object- and array-valued keys never reach the
+  header. Use JSON when structure matters.
+- **Drafts are included.** See the note under [Filtering](#filtering).
+- **Memory, not data-URI, is the size ceiling.** The file is assembled as a string and
+  handed to a `Blob` via `URL.createObjectURL`, so the old few-megabyte data-URI cap does
+  **not** apply — but the whole result set is still held in browser memory. Lower
+  `maxDocuments` for very large types.
+- **GROQ is built from input.** Selected types, the date value, and the field list are
+  interpolated straight into GROQ, and the custom-GROQ box is passed through verbatim.
+  Everything runs as read-only `fetch`es under the signed-in user's permissions, but
+  treat this as an internal admin tool, not something to expose to untrusted input.
+- **Type discovery scans the dataset.** With no `documentTypes` prop, the component runs
+  `array::unique(*[]._type)` on mount, which touches every document. On very large
+  datasets, pass `documentTypes` explicitly to skip it.
 
 ## Compatibility
 
-- Sanity Studio **v3, v4, or v5**
-- React **18 or 19**
-- `@sanity/ui` **v1, v2, or v3**, `@sanity/icons` **v2 or v3**
+**One build supports Sanity Studio v3, v4, v5 and v6.**
+
+| Peer | Declared range | Meaning |
+|---|---|---|
+| `sanity` | `>=3 <7` | Studio v3 through v6 |
+| `@sanity/ui` | `>=2 <5` | v2, v3, v4 — `<5` is **not** a mistake |
+| `@sanity/icons` | `>=2 <6` | v2 through v5 |
+| `react` | `^18.0.0 \|\| ^19.0.0` | React 18 or 19 |
+
+> **`@sanity/ui` is capped below v5 on purpose.** Studio v6 ships **`@sanity/ui` v4**,
+> not v5, so `>=2 <5` is the correct range for a v6 Studio.
+
+### How one build spans four Studio majors
+
+Two upstream breaking changes make naive imports fail across these majors:
+
+- **`@sanity/ui` v4** moved `Tooltip`, `Menu`, `MenuButton`, `MenuItem`, `Code`,
+  `Popover`, `Autocomplete`, `Toast` and `useToast` out of the package root into
+  **subpath entries**.
+- **`@sanity/icons` v5** removed **every named `*Icon` export**.
+
+The trap: **both packages still _declare_ the removed names in their `.d.ts`, typed
+`never`**. A named import type-checks, compiles, and bundles cleanly — then throws at
+runtime in the Studio. `tsc` and your bundler both call it fine.
+
+So this package **imports no `@sanity/ui` or `@sanity/icons` symbol directly**. Everything
+routes through
+[`@liiift-studio/sanity-ui-compat`](https://www.npmjs.com/package/@liiift-studio/sanity-ui-compat),
+which resolves the *installed* namespace at runtime. That indirection — not a
+version-matrix build — is what makes a single artifact work on v3 through v6. The compat
+layer is a normal `dependencies` entry and is **bundled into `dist`**, so there is
+nothing extra to install.
+
+> **`Progress` is supplied by the compat layer, not by `@sanity/ui`.** The export
+> progress bar uses `Progress`, which **has never been exported by `@sanity/ui`**
+> (verified absent from the typings of the installed `@sanity/ui@4.0.5`).
+> `sanity-ui-compat` implements it. If you vendor `src/` instead of consuming `dist`,
+> keep importing `Progress` from the compat package.
+
+### Verification status
+
+v3–v6 support rests on the declared peer ranges, green builds, and use in **three
+in-house Liiift Studio Studios**. It has **not** been exercised broadly in a running
+Sanity 6 Studio beyond those. Treat v6 as supported-and-believed-good rather than
+extensively field-tested.
+
+### TypeScript
+
+The published package **does not declare a `types` field**, so TypeScript consumers get
+no bundled declarations and the import resolves as untyped. `src/` ships in the tarball
+and `src/ExportData.tsx` carries the real `ExportDataProps` interface — use the
+[Props](#props) table as the contract, or declare a local module shim.
+
+## Maintainer note — two implementations under `src/`
+
+The repo contains **two** implementations of the component:
+
+| File | What it is | Shipped? |
+|---|---|---|
+| `src/ExportData.tsx` | The general-purpose component documented above | **Yes — this is what `dist` is built from** |
+| `src/ExportData.jsx` | A foundry-specific panel (`client`, `displayName`, `icon` props) | **No — currently dead code** |
+
+**Which one ships is easy to get wrong.** The `build` script's entry is `src/index.jsx`,
+which looks like it selects the `.jsx` implementation — but that file only does
+`export { default } from './ExportData'`, an **extensionless** specifier. esbuild's
+default `--resolve-extensions` order is `.tsx,.ts,.jsx,.js,…`, so it resolves
+**`ExportData.tsx`**.
+
+Confirm it from the build output rather than taking it on trust:
+
+```bash
+head -1 dist/index.js   # => // src/ExportData.tsx
+```
+
+This is fragile: renaming or deleting `ExportData.tsx` would silently swap the published
+component for the `.jsx` one, with entirely different props and no build error.
+Reconcile the two sources — or make the entry point's extension explicit — before the
+next publish.
+
+### The foundry-specific variant (`src/ExportData.jsx`)
+
+Preserved here because it is still in the repo and some Liiift foundry Studios vendor it
+directly. **It is not what `npm install` gives you.**
+
+It takes `client`, `displayName`, and `icon`; searches by title prefix
+(`title match "name*"`, drafts excluded) with an optional *Excluding* filter; discovers
+first-level reference fields (`_ref` and `_ref[]`) and offers a checkbox per field to
+re-fetch them **dereferenced** (`field->{...}`); and downloads via a `data:` URI, which
+browsers cap at a few megabytes. Its filename is `type-name-date.ext` using the browser's
+`en-US` locale date.
+
+Its document-type dropdown is a fixed foundry list — `typeface`, `collection`, `pair`,
+`font`, `license`, `order`, `account`, `cart`, `page`, `blogpost` — and its results list
+builds desk `href`s like `/desk/<type>;<id>` (with an `orderable-` prefix for `typeface`;
+the code also handles `licenseGroup`, which is not in the dropdown). To adapt it, fork or
+vendor the file and edit the `<Select>` `<option>` values and those desk paths to match
+your schema.
 
 ## Diagram source
 
@@ -232,10 +352,22 @@ regenerate after a change:
 npm run capture   # renders assets/*.mmd -> assets/*.svg via @mermaid-js/mermaid-cli
 ```
 
+## Part of the Liiift Sanity Tools suite
+
+One of a family of Sanity Studio utilities by [Liiift Studio](https://liiift.studio), all
+sharing the same v3–v6 compat approach:
+
+| Package | Does |
+|---|---|
+| [`sanity-search-and-delete`](https://www.npmjs.com/package/@liiift-studio/sanity-search-and-delete) | Find documents and bulk-delete them |
+| [`sanity-delete-unused-assets`](https://www.npmjs.com/package/@liiift-studio/sanity-delete-unused-assets) | Remove unreferenced image/file assets |
+| [`sanity-duplicate-and-rename`](https://www.npmjs.com/package/@liiift-studio/sanity-duplicate-and-rename) | Bulk-duplicate documents with templated renaming |
+| [`sanity-ui-compat`](https://www.npmjs.com/package/@liiift-studio/sanity-ui-compat) | The compat layer these tools import instead of `@sanity/ui` |
+
 ## License
 
 MIT © Quinn Keaveney / Liiift Studio. See the [`license` field](package.json) in
-`package.json`.
+`package.json`. No standalone `LICENSE` file is checked into the repo yet.
 
 ## Contributing
 

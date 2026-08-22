@@ -270,6 +270,21 @@ The trap: **both packages still _declare_ the removed names in their `.d.ts`, ty
 `never`**. A named import type-checks, compiles, and bundles cleanly — then throws at
 runtime in the Studio. `tsc` and your bundler both call it fine.
 
+You can see it in the shipped typings. `@sanity/icons@5.2.1`, `dist/index.d.ts`:
+
+```ts
+/**
+ * @deprecated `TrashIcon` is no longer exported from the `@sanity/icons` root entry
+ * (removed in v5) – the icon itself still exists. Import it from its own subpath
+ * instead: `import {TrashIcon} from '@sanity/icons/Trash'`
+ */
+declare const TrashIcon: never;
+```
+
+`TrashIcon` is still listed in that file's root `export { … }` block, so
+`import { TrashIcon } from '@sanity/icons'` resolves, type-checks as `never`, bundles —
+and is `undefined` at runtime.
+
 So this package **imports no `@sanity/ui` or `@sanity/icons` symbol directly**. Everything
 routes through
 [`@liiift-studio/sanity-ui-compat`](https://www.npmjs.com/package/@liiift-studio/sanity-ui-compat),

@@ -1,9 +1,9 @@
-# @liiift-studio/sanity-export-data
+# @overpunch/sanity-export-data
 
 > Pick document types, filter them, optionally pull in referencing documents, and download the result as CSV or JSON — straight from a Sanity Studio panel.
 
-[![npm](https://img.shields.io/npm/v/@liiift-studio/sanity-export-data.svg)](https://www.npmjs.com/package/@liiift-studio/sanity-export-data)
-[![license](https://img.shields.io/npm/l/@liiift-studio/sanity-export-data.svg)](https://www.npmjs.com/package/@liiift-studio/sanity-export-data)
+[![npm](https://img.shields.io/npm/v/@overpunch/sanity-export-data.svg)](https://www.npmjs.com/package/@overpunch/sanity-export-data)
+[![license](https://img.shields.io/npm/l/@overpunch/sanity-export-data.svg)](https://www.npmjs.com/package/@overpunch/sanity-export-data)
 [![Sanity Studio v3–v6](https://img.shields.io/badge/Sanity%20Studio-v3%20%E2%80%93%20v6-blue.svg)](https://www.sanity.io)
 
 `ExportData` is a single React component for Sanity Studio. An editor selects one or
@@ -44,7 +44,7 @@ to hand around — it runs inside Studio with the signed-in user's session.
 ## Install
 
 ```bash
-npm install @liiift-studio/sanity-export-data
+npm install @overpunch/sanity-export-data
 ```
 
 The package ships an ESM bundle and declares peer dependencies on `sanity`,
@@ -58,8 +58,8 @@ exact ranges and why `@sanity/ui` is capped below v5.
 required prop is a Sanity client:
 
 ```jsx
-import ExportData from '@liiift-studio/sanity-export-data'
-// or: import { ExportData } from '@liiift-studio/sanity-export-data'
+import ExportData from '@overpunch/sanity-export-data'
+// or: import { ExportData } from '@overpunch/sanity-export-data'
 import { useClient } from 'sanity'
 
 function DataExporter() {
@@ -94,7 +94,7 @@ that can supply a client. A minimal custom tool:
 import { defineConfig } from 'sanity'
 import { useClient } from 'sanity'
 import { DownloadIcon } from '@sanity/icons'
-import ExportData from '@liiift-studio/sanity-export-data'
+import ExportData from '@overpunch/sanity-export-data'
 
 function ExportDataTool() {
 	const client = useClient({ apiVersion: '2023-01-01' })
@@ -287,7 +287,7 @@ and is `undefined` at runtime.
 
 So this package **imports no `@sanity/ui` or `@sanity/icons` symbol directly**. Everything
 routes through
-[`@liiift-studio/sanity-ui-compat`](https://www.npmjs.com/package/@liiift-studio/sanity-ui-compat),
+[`@overpunch/sanity-ui-compat`](https://www.npmjs.com/package/@overpunch/sanity-ui-compat),
 which resolves the *installed* namespace at runtime. That indirection — not a
 version-matrix build — is what makes a single artifact work on v3 through v6. The compat
 layer is a normal `dependencies` entry and is **bundled into `dist`**, so there is
@@ -374,10 +374,10 @@ sharing the same v3–v6 compat approach:
 
 | Package | Does |
 |---|---|
-| [`sanity-search-and-delete`](https://www.npmjs.com/package/@liiift-studio/sanity-search-and-delete) | Find documents and bulk-delete them |
-| [`sanity-delete-unused-assets`](https://www.npmjs.com/package/@liiift-studio/sanity-delete-unused-assets) | Remove unreferenced image/file assets |
-| [`sanity-duplicate-and-rename`](https://www.npmjs.com/package/@liiift-studio/sanity-duplicate-and-rename) | Bulk-duplicate documents with templated renaming |
-| [`sanity-ui-compat`](https://www.npmjs.com/package/@liiift-studio/sanity-ui-compat) | The compat layer these tools import instead of `@sanity/ui` |
+| [`sanity-search-and-delete`](https://www.npmjs.com/package/@overpunch/sanity-search-and-delete) | Find documents and bulk-delete them |
+| [`sanity-delete-unused-assets`](https://www.npmjs.com/package/@overpunch/sanity-delete-unused-assets) | Remove unreferenced image/file assets |
+| [`sanity-duplicate-and-rename`](https://www.npmjs.com/package/@overpunch/sanity-duplicate-and-rename) | Bulk-duplicate documents with templated renaming |
+| [`sanity-ui-compat`](https://www.npmjs.com/package/@overpunch/sanity-ui-compat) | The compat layer these tools import instead of `@sanity/ui` |
 
 ## License
 

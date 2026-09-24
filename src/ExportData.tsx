@@ -18,8 +18,8 @@ import {
   Progress,
   TextInput,
   TextArea
-} from '@liiift-studio/sanity-ui-compat'
-import { DownloadIcon, DocumentIcon, RefreshIcon } from '@liiift-studio/sanity-ui-compat/icons'
+} from '@overpunch/sanity-ui-compat'
+import { DownloadIcon, DocumentIcon, RefreshIcon } from '@overpunch/sanity-ui-compat/icons'
 import { SanityClient } from 'sanity'
 
 // Types

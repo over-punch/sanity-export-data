@@ -32,12 +32,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Liiift-Studio/sanity-export-data.git"
+    "url": "https://github.com/over-punch/sanity-export-data.git"
   },
   "bugs": {
-    "url": "https://github.com/Liiift-Studio/sanity-export-data/issues"
+    "url": "https://github.com/over-punch/sanity-export-data/issues"
   },
-  "homepage": "https://github.com/Liiift-Studio/sanity-export-data#readme",
+  "homepage": "https://github.com/over-punch/sanity-export-data#readme",
   "peerDependencies": {
     "@sanity/icons": ">=2 <6",
     "@sanity/ui": ">=2 <5",

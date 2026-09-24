@@ -24,7 +24,7 @@ to hand around — it runs inside Studio with the signed-in user's session.
 
 ## How it works
 
-<img src="https://raw.githubusercontent.com/Liiift-Studio/sanity-export-data/main/assets/export-flow.svg?v=2" alt="Data-flow diagram: ExportData either uses the documentTypes prop or discovers types with array::unique on _type; the editor picks types plus optional date and field filters, or supplies a custom GROQ query; the query is fetched with a maxDocuments slice, optionally appending a reverse references lookup; results are serialised to CSV or JSON and saved via a Blob object URL as sanity-export-types-date.csv or .json" width="420" />
+<img src="https://raw.githubusercontent.com/over-punch/sanity-export-data/main/assets/export-flow.svg?v=2" alt="Data-flow diagram: ExportData either uses the documentTypes prop or discovers types with array::unique on _type; the editor picks types plus optional date and field filters, or supplies a custom GROQ query; the query is fetched with a maxDocuments slice, optionally appending a reverse references lookup; results are serialised to CSV or JSON and saved via a Blob object URL as sanity-export-types-date.csv or .json" width="420" />
 
 1. **Discover types.** On mount the component lists the types you can export. If you
    passed `documentTypes`, that list is used verbatim; otherwise it queries the dataset
@@ -387,4 +387,4 @@ MIT © Quinn Keaveney / Liiift Studio. See the [`license` field](package.json) i
 ## Contributing
 
 Issues and pull requests welcome at
-[Liiift-Studio/sanity-export-data](https://github.com/Liiift-Studio/sanity-export-data).
+[over-punch/sanity-export-data](https://github.com/over-punch/sanity-export-data).
